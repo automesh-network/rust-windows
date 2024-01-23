@@ -55,37 +55,36 @@ if(-not $skipVersionCheck) {
 
     if("rustc $latestToolchainVer" -ne "$currentImageVer") {
         echo "--> Image is out-of-date, rebuilding image"
-        $skipVersionCheck = $true
     } else {
         echo "--> Image is up-to-date, no need to rebuild"
+        exit 0
     }
 }
 
-if($skipVersionCheck) {
-    docker build -t ghcr.io/automesh-network/rust-windows:${train} -f .\${train}\Dockerfile .
+docker build -t ghcr.io/automesh-network/rust-windows:${train} -f .\${train}\Dockerfile .
+if($LASTEXITCODE) {
+    exit $LASTEXITCODE
+}
+
+if($username -and $password) {
+    docker push ghcr.io/automesh-network/rust-windows:${train}
     if($LASTEXITCODE) {
         exit $LASTEXITCODE
     }
 
-    if($username -and $password) {
-        docker push ghcr.io/automesh-network/rust-windows:${train}
+    if($train -eq "stable") {
+        docker tag ghcr.io/automesh-network/rust-windows:stable ghcr.io/automesh-network/rust-windows:latest
         if($LASTEXITCODE) {
             exit $LASTEXITCODE
         }
-
-        if($train -eq "stable") {
-            docker tag ghcr.io/automesh-network/rust-windows:stable ghcr.io/automesh-network/rust-windows:latest
-            if($LASTEXITCODE) {
-                exit $LASTEXITCODE
-            }
-            docker push ghcr.io/automesh-network/rust-windows:latest
-            if($LASTEXITCODE) {
-                exit $LASTEXITCODE
-            }
+        docker push ghcr.io/automesh-network/rust-windows:latest
+        if($LASTEXITCODE) {
+            exit $LASTEXITCODE
         }
-    } else {
-        echo "--> Docker username or password not set"
-        exit 1
     }
+} else {
+    echo "--> Docker username or password not set"
+    exit 1
 }
+
 
