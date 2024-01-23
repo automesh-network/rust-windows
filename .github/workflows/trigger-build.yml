@@ -8,6 +8,9 @@ on:
 jobs:
   trigger:
     runs-on: windows-2022
+    permissions:
+      contents: read
+      packages: write
 
     strategy:
       matrix:
