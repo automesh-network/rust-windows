@@ -1,13 +1,13 @@
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
 
 SHELL ["cmd", "/S", "/C"]
 
 # Install the Visual Studio Build Tools.
-ADD https://aka.ms/vs/16/release/vs_buildtools.exe /vs_buildtools.exe
+ADD https://aka.ms/vs/17/release/vs_buildtools.exe /vs_buildtools.exe
 RUN vs_buildtools.exe --quiet --wait --norestart --nocache \
-        --installPath C:\BuildTools \
+        --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools" \
         --add Microsoft.Component.MSBuild \
-        --add Microsoft.VisualStudio.Component.Windows10SDK.17763 \
+        --add Microsoft.VisualStudio.Component.Windows11SDK.22621 \
         --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 \
     || IF "%ERRORLEVEL%"=="3010" EXIT 0
 RUN del vs_buildtools.exe
