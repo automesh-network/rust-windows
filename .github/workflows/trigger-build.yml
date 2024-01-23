@@ -18,9 +18,7 @@ jobs:
 
     steps:
       - name: Check out repo
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.ref }}
+        uses: actions/checkout@v4
       - name: Check if image is up-to-date, and build if not
         run: .\check-and-build.ps1 $env:TRAIN ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }}
         env:
