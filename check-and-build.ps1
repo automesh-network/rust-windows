@@ -1,5 +1,4 @@
 #! powershell
-# Based off of https://github.com/instrumentisto/rust-docker-image
 param (
     [Parameter(Mandatory)]
     [ValidateSet("stable", "beta", "nightly")]
@@ -36,23 +35,33 @@ if($username -and $password) {
     }
 }
 
+$skipVersionCheck = $false
 docker pull ghcr.io/automesh-network/rust-windows:${train}
 if($LASTEXITCODE) {
-    exit $LASTEXITCODE
+    echo "--> Image does not exist, skipping version check and proceeding with build"
+    $skipVersionCheck = $true
 }
-$currentImageVer = ( `
-        (docker run --rm ghcr.io/automesh-network/rust-windows:${train} rustc -V) `
-        | Select-String -Pattern "rustc" `
-        | Select-Object -Expand Line `
-    ).trim()
-if($LASTEXITCODE) {
-    exit $LASTEXITCODE
+
+if(-not $skipVersionCheck) {
+    $currentImageVer = ( `
+            (docker run --rm ghcr.io/automesh-network/rust-windows:${train} rustc -V) `
+            | Select-String -Pattern "rustc" `
+            | Select-Object -Expand Line `
+        ).trim()
+    if($LASTEXITCODE) {
+        exit $LASTEXITCODE
+    }
+    echo "--> Current image toolchain version: $currentImageVer"
+
+    if("rustc $latestToolchainVer" -ne "$currentImageVer") {
+        echo "--> Image is out-of-date, rebuilding image"
+        $skipVersionCheck = $true
+    } else {
+        echo "--> Image is up-to-date, no need to rebuild"
+    }
 }
-echo "--> Current image toolchain version: $currentImageVer"
 
-if("rustc $latestToolchainVer" -ne "$currentImageVer") {
-    echo "--> Image is out-of-date, rebuilding iamge"
-
+if($skipVersionCheck) {
     docker build -t ghcr.io/automesh-network/rust-windows:${train} -f .\${train}\Dockerfile .
     if($LASTEXITCODE) {
         exit $LASTEXITCODE
@@ -78,6 +87,5 @@ if("rustc $latestToolchainVer" -ne "$currentImageVer") {
         echo "--> Docker username or password not set"
         exit 1
     }
-} else {
-    echo "--> Image is up-to-date, no need to rebuild"
 }
+
