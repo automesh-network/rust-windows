@@ -7,7 +7,7 @@ on:
 
 jobs:
   trigger:
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     strategy:
       matrix:
@@ -19,7 +19,7 @@ jobs:
         with:
           ref: ${{ github.ref }}
       - name: Check if image is up-to-date, and build if not
-        run: .\check-and-build.ps1 $env:TRAIN $env:USERNAME $env:PASSWORD
+        run: .\check-and-build.ps1 $env:TRAIN ${{ github.actor }} ${{ secrets.GITHUB_TOKEN }}
         env:
           TRAIN: ${{ matrix.train }}
           USERNAME: ${{ secrets.DOCKER_USERNAME }}

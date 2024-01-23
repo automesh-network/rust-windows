@@ -28,12 +28,20 @@ $latestToolchainVer = ( `
     ).split('"')[2].trim()
 echo "--> Latest toolchain version: rustc $latestToolchainVer"
 
-docker pull yodal/rust-windows:${train}
+echo "--> Logging into Docker registry $registry"
+if($username -and $password) {
+    docker login -u $username -p $password ghcr.io
+    if($LASTEXITCODE) {
+        exit $LASTEXITCODE
+    }
+}
+
+docker pull ghcr.io/automesh-network/rust-windows:${train}
 if($LASTEXITCODE) {
     exit $LASTEXITCODE
 }
 $currentImageVer = ( `
-        (docker run --rm yodal/rust-windows:${train} rustc -V) `
+        (docker run --rm ghcr.io/automesh-network/rust-windows:${train} rustc -V) `
         | Select-String -Pattern "rustc" `
         | Select-Object -Expand Line `
     ).trim()
@@ -45,28 +53,23 @@ echo "--> Current image toolchain version: $currentImageVer"
 if("rustc $latestToolchainVer" -ne "$currentImageVer") {
     echo "--> Image is out-of-date, rebuilding iamge"
 
-    docker build -t yodal/rust-windows:${train} -f .\${train}\Dockerfile .
+    docker build -t ghcr.io/automesh-network/rust-windows:${train} -f .\${train}\Dockerfile .
     if($LASTEXITCODE) {
         exit $LASTEXITCODE
     }
 
     if($username -and $password) {
-        docker login -u $username -p $password
-        if($LASTEXITCODE) {
-            exit $LASTEXITCODE
-        }
-
-        docker push yodal/rust-windows:${train}
+        docker push ghcr.io/automesh-network/rust-windows:${train}
         if($LASTEXITCODE) {
             exit $LASTEXITCODE
         }
 
         if($train -eq "stable") {
-            docker tag yodal/rust-windows:stable yodal/rust-windows:latest
+            docker tag ghcr.io/automesh-network/rust-windows:stable ghcr.io/automesh-network/rust-windows:latest
             if($LASTEXITCODE) {
                 exit $LASTEXITCODE
             }
-            docker push yodal/rust-windows:latest
+            docker push ghcr.io/automesh-network/rust-windows:latest
             if($LASTEXITCODE) {
                 exit $LASTEXITCODE
             }
